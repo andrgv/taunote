@@ -1,0 +1,10 @@
+[package]
+name = "taunote"
+version = "0.1.0"
+authors = ["Andrea Gonzalez Varela <agvarela@seas.upenn.edu>"]
+edition = "2024"
+description = "CLI tool for local STT"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+shellexpand = "3.1"
