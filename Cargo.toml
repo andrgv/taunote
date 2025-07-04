@@ -8,3 +8,4 @@ description = "CLI tool for local STT"
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
 shellexpand = "3.1"
+ffmpeg-next = "7.1.0"
