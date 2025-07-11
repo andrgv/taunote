@@ -1,6 +1,6 @@
 use std::{path::Path, process::Command, error::Error};
 
-/// run ffmpeg CLI to normalize and trim silence
+// run ffmpeg CLI to normalize and trim silence
 pub fn preprocess_audio(input: &Path, output: &Path) -> Result<(), Box<dyn Error>> {
     let status = Command::new("ffmpeg")
         .arg("-y") // overwrite

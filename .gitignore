@@ -27,8 +27,12 @@ target
 
 # whisper.cpp binary and models
 /whisper-main
-models/*.bin
+models/
 
 
-#tmp files
-/tmp
+# tmp files
+tmp/
+
+
+# environment variables
+.env
