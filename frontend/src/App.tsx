@@ -78,7 +78,7 @@ function App() {
           // Set the newly created audio project as selected
           setSelectedGroupId(groupId);
           setSelectedAudioProjectId(newAudio.id);
-          setCurrentView('welcome');
+          setCurrentView('project');
           return { ...group, audioProjects: updatedAudioProjects };
         }
         return group;
@@ -90,8 +90,7 @@ function App() {
   const handleSelectAudioProject = (groupId: string, audioProjectId: string) => {
     setSelectedGroupId(groupId);
     setSelectedAudioProjectId(audioProjectId);
-    // TODO: change
-    setCurrentView('welcome'); // For now, selecting an audio project just shows welcome view
+    setCurrentView('project');
   };
 
   // Helper to get the name of the currently selected audio project and its group
@@ -126,12 +125,13 @@ function App() {
 
       {/* Conditional rendering of the main content area */}
       {currentView === 'welcome' && <WelcomeView />}
-      {currentView === 'welcome' && selectedAudioProjectDetails && (
-        <NewAudioView
+      {currentView === 'project' && selectedAudioProjectDetails && (
+        <ProjectView
           groupId={selectedAudioProjectDetails.groupId}
           groupName={selectedAudioProjectDetails.groupName}
           audioProjectId={selectedAudioProjectDetails.audioProjectId}
           audioProjectName={selectedAudioProjectDetails.audioProjectName}
+          onBack={() => setCurrentView('welcome')}
         />
       )}
     </div>
