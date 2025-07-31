@@ -8,7 +8,7 @@ pub fn run_whisperx(
     language: &Option<String>,
 ) -> Result<(), Box<dyn Error>> {
     let mut cmd = Command::new("python3");
-    cmd.arg("python_backend/whisperx_runner.py")
+    cmd.arg("../python_backend/whisperx_runner.py")
        .arg("--input").arg(input_path);
 
     if let Some(path) = output_path {

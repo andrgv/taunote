@@ -36,3 +36,4 @@ tmp/
 
 # environment variables
 .env
+.vscode/
