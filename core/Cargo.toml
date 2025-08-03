@@ -1,5 +1,5 @@
 [package]
-name = "taunote-core"
+name = "taunote_core"
 version = "0.1.0"
 authors = ["Andrea Gonzalez Varela <agvarela@seas.upenn.edu>"]
 edition = "2021"
