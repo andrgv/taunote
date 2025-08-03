@@ -1,14 +1,16 @@
 use clap::Parser;
 use uuid::Uuid;
-use std::result::Result;
-use std::error::Error;
+// use std::result::Result;
+// use std::error::Error;
+use anyhow::Result;
 use std::path::{Path, PathBuf};
 use std::fs;
 
 mod services;
 use services::transcribe::whisperx::run_whisperx;
 use services::audio::ffmpeg::preprocess_audio;
-use services::summarizer::llama_client::summarize;
+use services::llm::llama_queue::init_llama_queue;
+use services::llm::prompt_tasks::{summarize, generate_email};
 use services::database::schema::init_db;
 use services::database::models::AudioProject;
 use services::database::queries::{insert_audio_project, insert_project_notes};
@@ -29,13 +31,15 @@ struct Cli {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     let args = Cli::parse();
     // Finding local directory paths to initialize the database, matches src-tauri identifier
     let proj_dirs = directories_next::ProjectDirs::from("com", "andrea", "taunote")
         .expect("Failed to find platform data directory");
     let base_path = proj_dirs.data_local_dir();
     init_db(&base_path)?;
+
+    init_llama_queue().await;
     
     // Open connection to db
     let db_path = base_path.join("db").join("project.db");
@@ -54,7 +58,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let summary = summarize(&tmp_transcript_path.to_path_buf()).await?;
     println!("Generated summary!");
     println!("{}", summary);
-    let email = ""; // TODO: actually set up the different modes and prompts
+    let email = generate_email(&tmp_transcript_path.to_path_buf()).await?;
+    println!("Generated email!");
+    println!("{}", email);
     
     // Project metadata
     let project_id = Uuid::new_v4().to_string();
@@ -75,7 +81,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     fs::create_dir_all(&project_folder)?;
     fs::write(project_folder.join("transcript.md"), &transcript)?;
     fs::write(project_folder.join("summary.md"), &summary)?;
-    fs::write(project_folder.join("email.md"), email)?;
+    fs::write(project_folder.join("email.md"), &email)?;
     println!("Finished writing markdown files!");
 
     // Insert to the database
@@ -89,7 +95,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         language,
     };
     insert_audio_project(&conn, &audio_project)?;
-    insert_project_notes(&conn, &project_id, &transcript, &summary, email)?;
+    insert_project_notes(&conn, &project_id, &transcript, &summary, &email)?;
     // TODO: clean tmp/
     println!("Finished!");
     Ok(())

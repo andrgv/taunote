@@ -1,7 +1,8 @@
-use std::{path::Path, process::Command, error::Error};
+use std::{path::Path, process::Command};
+use anyhow::{anyhow, Result};
 
 // run ffmpeg CLI to normalize and trim silence
-pub fn preprocess_audio(input: &Path, output: &Path) -> Result<(), Box<dyn Error>> {
+pub fn preprocess_audio(input: &Path, output: &Path) -> Result<()> {
     let status = Command::new("ffmpeg")
         .arg("-y") // overwrite
         .arg("-i").arg(input.as_os_str())
@@ -16,6 +17,6 @@ pub fn preprocess_audio(input: &Path, output: &Path) -> Result<(), Box<dyn Error
     if status.success() {
         Ok(())
     } else {
-        Err("ffmpeg failed".into())
+        Err(anyhow!("ffmpeg failed with exit status: {:?}", status.code()))
     }
 }
