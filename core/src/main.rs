@@ -6,7 +6,7 @@ use anyhow::Result;
 use std::path::{Path, PathBuf};
 use std::fs;
 
-mod services;
+pub mod services;
 use services::transcribe::whisperx::run_whisperx;
 use services::audio::ffmpeg::preprocess_audio;
 use services::llm::llama_queue::init_llama_queue;
