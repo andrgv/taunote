@@ -1,6 +1,5 @@
 use std::path::{Path, PathBuf};
 use directories_next;
-use rusqlite;
 
 use taunote_core::services::{
     audio::ffmpeg::preprocess_audio,
@@ -73,8 +72,9 @@ pub async fn transcribe_audio(
 #[tauri::command]
 pub async fn setup_backend() -> Result<(), String> {
     // start + open db
-    let proj_dirs = directories_next::ProjectDirs::from("com", "andrea", "taunote")
-        .expect("Failed to find platform data directory");
+    let proj_dirs = directories_next::ProjectDirs::from(
+        "com", "andrea", "taunote"
+    ).expect("Failed to find platform data directory");
     let base_path = proj_dirs.data_local_dir();
     init_db(&base_path).map_err(|e| e.to_string())?;
     
@@ -93,7 +93,8 @@ pub fn insert_audio_project_to_db(
         .expect("Failed to find platform data directory");
     let base_path = proj_dirs.data_local_dir();
     let db_path = base_path.join("db").join("project.db");
-    let conn = rusqlite::Connection::open(db_path)?;
+    let conn = rusqlite::Connection::open(db_path)
+        .map_err(|e| e.to_string())?;
     insert_audio_project(&conn, &audio_project)
         .map_err(|e| e.to_string())?;
 
@@ -107,13 +108,20 @@ pub fn insert_project_notes_to_db(
     summary: String,
     email: String
 ) -> Result<(), String> {
-    let proj_dirs = directories_next::ProjectDirs::from("com", "andrea", "taunote")
-        .expect("Failed to find platform data directory");
+    let proj_dirs = directories_next::ProjectDirs::from(
+        "com", "andrea", "taunote"
+    ).expect("Failed to find platform data directory");
     let base_path = proj_dirs.data_local_dir();
     let db_path = base_path.join("db").join("project.db");
-    let conn = rusqlite::Connection::open(db_path)?;
-    insert_project_notes(&conn, &project_id, &transcript, &summary, &email)
+    let conn = rusqlite::Connection::open(db_path)
         .map_err(|e| e.to_string())?;
+    insert_project_notes(
+        &conn, 
+        &project_id, 
+        &transcript, 
+        &summary, 
+        &email
+    ).map_err(|e| e.to_string())?;
 
     Ok(())
 }
