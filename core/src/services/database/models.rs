@@ -1,4 +1,5 @@
-#[derive(Debug)]
+use serde::{Serialize, Deserialize};
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AudioProject {
     pub id: String,
     pub group_id: String,
