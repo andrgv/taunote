@@ -14,4 +14,4 @@ export interface ProjectGroup {
   audioProjects: AudioProject[];
 }
 
-export type AppView = 'welcome' | 'project';
+export type AppView = "welcome" | "project";

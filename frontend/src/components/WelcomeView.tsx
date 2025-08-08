@@ -1,33 +1,46 @@
-import React, { useState } from 'react';
-import { UploadCloud } from 'lucide-react';
-import { open } from '@tauri-apps/plugin-dialog';
+import React, { useState } from "react";
+import { UploadCloud } from "lucide-react";
+import { open } from "@tauri-apps/plugin-dialog";
 
 interface WelcomeViewProps {
   onFileUploaded: (
     filePath: string,
     lang: string,
-    type: 'meeting' | 'lecture' | 'other'
+    type: "meeting" | "lecture" | "other",
   ) => Promise<void>;
 }
 
 const WelcomeView: React.FC<WelcomeViewProps> = ({ onFileUploaded }) => {
-  const [recordingType, setRecordingType] = useState<'Meeting' | 'Lecture' | 'Other'>('Meeting');
-  const [language, setLanguage] = useState<'Auto' | 'English' | 'Spanish' | 'French'>('Auto');
+  const [recordingType, setRecordingType] = useState<
+    "Meeting" | "Lecture" | "Other"
+  >("Meeting");
+  const [language, setLanguage] = useState<
+    "Auto" | "English" | "Spanish" | "French"
+  >("Auto");
 
   const handlePick = async () => {
     const selected = await open({
       multiple: false,
-      filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'm4a'] }],
+      filters: [{ name: "Audio", extensions: ["mp3", "wav", "m4a"] }],
     });
     if (!selected || Array.isArray(selected)) return;
 
     const langCode =
-      language === 'Auto' ? 'auto' :
-      language === 'English' ? 'en' :
-      language === 'Spanish' ? 'es' :
-      language === 'French' ? 'fr' : 'auto';
+      language === "Auto"
+        ? "auto"
+        : language === "English"
+          ? "en"
+          : language === "Spanish"
+            ? "es"
+            : language === "French"
+              ? "fr"
+              : "auto";
 
-    await onFileUploaded(selected, langCode, recordingType.toLowerCase() as any);
+    await onFileUploaded(
+      selected,
+      langCode,
+      recordingType.toLowerCase() as any,
+    );
   };
 
   return (
@@ -41,7 +54,8 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ onFileUploaded }) => {
         </div>
         <h1 className="text-4xl font-bold mb-4">Welcome to Taunote</h1>
         <p className="text-lg text-gray-400 max-w-xl">
-          Upload your audio recordings to get started with transcription and AI-powered summaries
+          Upload your audio recordings to get started with transcription and
+          AI-powered summaries
         </p>
       </div>
 
@@ -87,9 +101,14 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ onFileUploaded }) => {
       >
         <UploadCloud size={48} className="text-gray-500 mb-4" />
         <p className="text-gray-400 text-lg mb-2">
-          <span className="text-white font-semibold">Drop your audio file here</span> or click to browse
+          <span className="text-white font-semibold">
+            Drop your audio file here
+          </span>{" "}
+          or click to browse
         </p>
-        <p className="text-gray-500 text-sm">Supports MP3, WAV, M4A files up to 500MB</p>
+        <p className="text-gray-500 text-sm">
+          Supports MP3, WAV, M4A files up to 500MB
+        </p>
       </div>
     </div>
   );
