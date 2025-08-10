@@ -1,15 +1,15 @@
+use anyhow::{anyhow, Result};
+use reqwest::Client;
 use std::{
+    ffi::OsStr,
     path::PathBuf,
     process::{Child, Command},
-    ffi::OsStr,
 };
-use tokio::{
-    time::{sleep, Duration},
-    net::TcpStream,
-};
-use reqwest::Client;
 use sysinfo::System;
-use anyhow::{anyhow, Result};
+use tokio::{
+    net::TcpStream,
+    time::{sleep, Duration},
+};
 
 #[derive(Debug)]
 pub struct LlamaClient {
@@ -21,24 +21,25 @@ pub struct LlamaClient {
 
 impl LlamaClient {
     pub async fn try_new(
-        server_path: PathBuf, 
-        model_path: PathBuf, 
-        host: String, 
+        server_path: PathBuf,
+        model_path: PathBuf,
+        host: String,
         port: u16,
     ) -> Result<Self> {
         let server = spawn_llama_server(&server_path, &model_path, port)?;
         wait_for_server(&host, port, None, None).await?;
         let client = Client::new();
         wait_for_model_ready(&host, port, &client, None, None).await?;
-        
-        Ok(Self { server, client, host, port })
+
+        Ok(Self {
+            server,
+            client,
+            host,
+            port,
+        })
     }
 
-    pub async fn complete(
-        &self, 
-        prompt: String, 
-        n_predict: u32,
-    ) -> Result<String> {
+    pub async fn complete(&self, prompt: String, n_predict: u32) -> Result<String> {
         let url = format!("http://{}:{}/completions", self.host, self.port);
         let body = serde_json::json!({
             "prompt": prompt,
@@ -85,18 +86,18 @@ fn kill_all_llama_servers() {
 }
 
 // Spawns the llama server subprocess
-fn spawn_llama_server(
-    server_path: &PathBuf, 
-    model_path: &PathBuf, 
-    port: u16,
-) -> Result<Child> {
+fn spawn_llama_server(server_path: &PathBuf, model_path: &PathBuf, port: u16) -> Result<Child> {
     kill_all_llama_servers();
     let child = Command::new(server_path)
         .args([
-            "--model",        model_path.to_str().unwrap(),
-            "--port",         &port.to_string(),
-            "--n-gpu-layers", "35",
-            "--ctx-size",     "4096",
+            "--model",
+            model_path.to_str().unwrap(),
+            "--port",
+            &port.to_string(),
+            "--n-gpu-layers",
+            "35",
+            "--ctx-size",
+            "4096",
             "--no-warmup",
         ])
         .spawn()?;
@@ -106,11 +107,11 @@ fn spawn_llama_server(
 // waits for TCP server to be available
 async fn wait_for_server(
     host: &str,
-    port: u16, 
-    retries: Option<u32>, 
+    port: u16,
+    retries: Option<u32>,
     delay_ms: Option<u64>,
 ) -> Result<()> {
-    let addr = format!("{}:{}", host, port);
+    let addr = format!("{host}:{port}");
     for _ in 0..retries.unwrap_or(10) {
         if TcpStream::connect(&addr).await.is_ok() {
             return Ok(());
@@ -128,7 +129,7 @@ async fn wait_for_model_ready(
     retries: Option<u32>,
     delay_ms: Option<u64>,
 ) -> Result<()> {
-    let url = format!("http://{}:{}/completions", host, port);
+    let url = format!("http://{host}:{port}/completions");
     let dummy = serde_json::json!({
         "prompt": "ping",
         "stream": false,

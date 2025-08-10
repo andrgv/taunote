@@ -1,7 +1,7 @@
+use crate::services::llm::llama_queue::enqueue_completion;
+use anyhow::Result;
 use std::path::PathBuf;
 use tokio::fs;
-use anyhow::Result;
-use crate::services::llm::llama_queue::enqueue_completion;
 
 fn truncate(text: &str, max_len: usize) -> &str {
     &text[..std::cmp::min(max_len, text.len())]

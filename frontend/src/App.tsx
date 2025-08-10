@@ -175,11 +175,11 @@ function App() {
       project_type: type,
       language: lang,
     };
-    await invoke("insert_audio_project_to_db", { audio_project: dbAudio });
+    await invoke("insert_audio_project_to_db", { audioProject: dbAudio });
 
     // Transcribe
     const transcriptPath = await invoke<string>("transcribe_audio", {
-      audio_path: filePath,
+      audioPath: filePath,
       lang,
     });
 

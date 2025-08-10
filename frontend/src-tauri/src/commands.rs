@@ -30,7 +30,7 @@ fn connect_to_db() -> Result<Connection, String> {
         .expect("Failed to find platform data directory");
     let base_path = proj_dirs.data_local_dir();
     let db_path = base_path.join("db").join("project.db");
-    Ok(Connection::open(db_path).map_err(|e| e.to_string())?)
+    Connection::open(db_path).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -121,10 +121,12 @@ pub async fn transcribe_audio(audio_path: String, lang: String) -> Result<String
 
     preprocess_audio(&path, tmp_preprocessed_audio_path).map_err(|e| e.to_string())?;
 
+    let lang_input = if (lang == "auto") { None } else { Some(lang) };
+
     run_whisperx(
         tmp_preprocessed_audio_path,
         &Some(tmp_transcript_path.to_path_buf()),
-        &Some(lang),
+        &lang_input,
     )
     .map_err(|e| e.to_string())?;
 
@@ -137,7 +139,7 @@ pub async fn setup_backend() -> Result<(), String> {
     let proj_dirs = directories_next::ProjectDirs::from("com", "andrea", "taunote")
         .expect("Failed to find platform data directory");
     let base_path = proj_dirs.data_local_dir();
-    init_db(&base_path).map_err(|e| e.to_string())?;
+    init_db(base_path).map_err(|e| e.to_string())?;
 
     // start llama queue
     // TODO: might want to actually make it return errors @sp

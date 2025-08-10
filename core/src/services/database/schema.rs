@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 fn get_db_path(base_dir: &Path) -> PathBuf {
     let db_dir = base_dir.join("db");
     fs::create_dir_all(&db_dir).expect("Failed to create database directory");
-    return db_dir.join("project.db");
+    db_dir.join("project.db")
 }
 
 pub fn init_db(base_dir: &Path) -> Result<()> {

@@ -15,7 +15,7 @@ def whisperx_runner(
         audio_file: str,
         output_path: str = "../tmp/transcript.txt",
         device: str = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu"),
-        batch_size: int = 16, # reduce if low on GPU mem
+        batch_size: int = 8, # reduce if low on GPU mem
         compute_type: str = None,
         language = None
 ):
@@ -24,7 +24,7 @@ def whisperx_runner(
                 # Transcribe with original whisper (batched)
                 print("[INFO] Loading STT model and audio...")
                 model_dir = os.path.join('../models/whisperx/')
-                model = whisperx.load_model("large-v2", device, compute_type=compute_type, download_root=model_dir)
+                model = whisperx.load_model("small", device, compute_type=compute_type, download_root=model_dir)
 
                 audio = whisperx.load_audio(audio_file)
                 print(f"[INFO] Transcribing: {audio_file}...")
