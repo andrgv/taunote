@@ -25,12 +25,13 @@ pub fn insert_project_notes(
     transcript: &str,
     summary: &str,
     email: &str,
+    lecture_notes: &str
 ) -> Result<()> {
     conn.execute(
         "INSERT INTO project_notes (
-            project_id, transcript, summary, email
-         ) VALUES (?1, ?2, ?3, ?4)",
-        params![project_id, transcript, summary, email],
+            project_id, transcript, summary, email, lecture_notes
+         ) VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![project_id, transcript, summary, email, lecture_notes],
     )?;
     Ok(())
 }

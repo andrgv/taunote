@@ -2,6 +2,7 @@ use directories_next::ProjectDirs;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use std::fs;
 
 use taunote_core::services::{
     audio::ffmpeg::preprocess_audio,
@@ -91,47 +92,97 @@ pub fn get_project_groups() -> std::result::Result<Vec<ProjectGroup>, String> {
     Ok(groups)
 }
 
+fn write_to_file(text: &str, dir_path: &str, filename: &str) -> Result<(), String> {
+    let project_folder = PathBuf::from(dir_path);
+    fs::create_dir_all(&project_folder)
+        .map_err(|e| format!("Could not create directory {}: {}", dir_path, e))?;
+    fs::write(project_folder.join(filename), text)
+        .map_err(|e| format!("Could not write to file {}: {}", filename, e))?;
+    Ok(())
+}
+
+// TODO: rethink what each of these 3 functions is going to do differently
+// If not, condense with hof or match case
 #[tauri::command]
-pub async fn summarize_project(transcript_path: String) -> Result<String, String> {
+pub async fn summarize_transcript(transcript_path: String) -> Result<(String, String), String> {
     let path = PathBuf::from(transcript_path);
-    summarize(&path).await.map_err(|e| e.to_string())
+    let summary = summarize(&path).await
+        .map_err(|e| e.to_string())?;
+    let filename = "transcript.md";
+    let dir_path = path
+        .parent().ok_or("How tf is there no parent dir?")?
+        .to_str().ok_or("Could not convert path to string")?;
+    write_to_file(summary.as_str(), dir_path, &filename)?;
+    Ok((filename.to_string(), summary))
 }
 
 #[tauri::command]
-pub async fn project_email(transcript_path: String) -> Result<String, String> {
+pub async fn write_email(transcript_path: String) -> Result<(String, String), String> {
     let path = PathBuf::from(transcript_path);
-    generate_email(&path).await.map_err(|e| e.to_string())
+    let text = generate_email(&path).await
+        .map_err(|e| e.to_string())?;
+    let filename = "email.md";
+    let dir_path = path
+        .parent().ok_or("How tf is there no parent dir?")?
+        .to_str().ok_or("Could not convert path to string")?;
+    write_to_file(text.as_str(), dir_path, &filename)?;
+    Ok((filename.to_string(), text))
 }
 
 #[tauri::command]
-pub async fn project_lecture_notes(transcript_path: String) -> Result<String, String> {
+pub async fn write_lecture_notes(transcript_path: String) -> Result<(String, String), String> {
     let path = PathBuf::from(transcript_path);
-    generate_lecture_notes(&path)
-        .await
-        .map_err(|e| e.to_string())
+    let text = generate_lecture_notes(&path)
+        .await.map_err(|e| e.to_string())?;
+    let filename = "lecture_notes.md";
+    let dir_path = path
+        .parent().ok_or("How tf is there no parent dir?")?
+        .to_str().ok_or("Could not convert path to string")?;
+    write_to_file(text.as_str(), dir_path, &filename)?;
+    Ok((filename.to_string(), text))
 }
 
 #[tauri::command]
-pub async fn transcribe_audio(audio_path: String, lang: String) -> Result<String, String> {
+pub async fn transcribe_audio(
+    audio_path: String,
+    lang: String,
+    group_name: String,
+    project_name: String
+) -> Result<(String, String), String> {
     let path = PathBuf::from(audio_path);
     let tmp_preprocessed_audio_path_name = "../tmp/preprocessed.wav";
     let tmp_preprocessed_audio_path = Path::new(tmp_preprocessed_audio_path_name);
-    let tmp_transcript_path_name = "../tmp/transcript.txt";
-    let tmp_transcript_path = Path::new(tmp_transcript_path_name);
 
     preprocess_audio(&path, tmp_preprocessed_audio_path).map_err(|e| e.to_string())?;
 
-    let lang_input = if (lang == "auto") { None } else { Some(lang) };
+    let proj_dirs = directories_next::ProjectDirs::from("com", "andrea", "taunote")
+        .expect("Failed to find platform data directory");
+    let base_path = proj_dirs.data_local_dir();
+    let relative_path = format!("groups/{group_name}/{project_name}");
+    let project_folder = base_path.join(&relative_path);
+    fs::create_dir_all(&project_folder)
+        .map_err(|e| format!("Unable to create directory: {}", e))?;
+
+    let filename = project_folder.join("transcript.md");
+
+    let lang_input = if lang.eq_ignore_ascii_case("auto") { None } else { Some(lang) };
 
     run_whisperx(
         tmp_preprocessed_audio_path,
-        &Some(tmp_transcript_path.to_path_buf()),
+        &Some(filename.clone()),
         &lang_input,
     )
     .map_err(|e| e.to_string())?;
 
-    Ok(tmp_transcript_path_name.to_string())
+    let transcript = String::from_utf8(
+        fs::read(&filename).map_err(|e| format!("Could not read from file: {}", e))?
+    ).map_err(|e| format!("Could not convert to utf8 string: {}", e))?;
+
+    let filename_string = filename.to_string_lossy().into_owned();
+
+    Ok((filename_string, transcript))
 }
+
 
 #[tauri::command]
 pub async fn setup_backend() -> Result<(), String> {
@@ -160,12 +211,22 @@ pub fn insert_project_group_to_db(id: String, name: String) -> Result<(), String
 }
 
 #[tauri::command]
-pub fn insert_audio_project_to_db(audio_project: AudioProject) -> Result<(), String> {
+pub fn insert_audio_project_to_db(
+    // TODO: this is absolutely awful and it makes my eyes bleed
+    // but yeah... quick fix?
+    audio_project: Option<AudioProject>,
+    audioProject: Option<AudioProject>,
+) -> Result<(), String> {
     let conn = connect_to_db()?;
-    insert_audio_project(&conn, &audio_project).map_err(|e| e.to_string())?;
 
+    let ap = audio_project
+        .or(audioProject)
+        .ok_or_else(|| "missing arg: audio_project / audioProject".to_string())?;
+
+    insert_audio_project(&conn, &ap).map_err(|e| e.to_string())?;
     Ok(())
 }
+
 
 #[tauri::command]
 pub fn insert_project_notes_to_db(
@@ -173,9 +234,10 @@ pub fn insert_project_notes_to_db(
     transcript: String,
     summary: String,
     email: String,
+    lecture_notes: String
 ) -> Result<(), String> {
     let conn = connect_to_db()?;
-    insert_project_notes(&conn, &project_id, &transcript, &summary, &email)
+    insert_project_notes(&conn, &project_id, &transcript, &summary, &email, &lecture_notes)
         .map_err(|e| e.to_string())?;
 
     Ok(())

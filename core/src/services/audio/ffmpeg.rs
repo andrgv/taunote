@@ -20,7 +20,7 @@ pub fn preprocess_audio(input: &Path, output: &Path) -> Result<()> {
         .arg("-af")
         .arg("loudnorm=I=-16:TP=-1.5,silenceremove=start_periods=1:start_threshold=-50dB")
         .arg("-ar")
-        .arg("48000")
+        .arg("16000")
         .arg("-ac")
         .arg("1")
         .arg("-sample_fmt")

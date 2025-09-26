@@ -18,5 +18,6 @@ CREATE VIRTUAL TABLE IF NOT EXISTS project_notes USING fts5(
     project_id UNINDEXED,
     transcript,
     summary,
-    email
+    email,
+    leture_notes
 );

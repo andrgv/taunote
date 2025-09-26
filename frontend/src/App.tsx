@@ -113,10 +113,10 @@ function App() {
       language: "en",
     };
     try {
-      await invoke("insert_audio_project_to_db", { audioProject: dbAudio });
+      await invoke("insert_audio_project_to_db", { audio_project: dbAudio });
     } catch (e) {
       console.error("DB insert failed:", e);
-      // Optionally roll back UI change
+      // TODO: Optionally roll back UI change
     }
   };
 
@@ -168,25 +168,56 @@ function App() {
     // Persist
     const dbAudio: DBAudioProject = {
       id: uiAudio.id,
-      group_id: groupId,
+      group_id: groupId!,
       name: uiAudio.name,
       relative_path: filePath,
       date: uiAudio.date,
       project_type: type,
       language: lang,
     };
-    await invoke("insert_audio_project_to_db", { audioProject: dbAudio });
+    await invoke("insert_audio_project_to_db", { audio_project: dbAudio });
 
     // Transcribe
-    const transcriptPath = await invoke<string>("transcribe_audio", {
-      audioPath: filePath,
-      lang,
+    const [transcriptPath, transcriptText] = await invoke<[string, string]>(
+      "transcribe_audio",
+      {
+        audio_path: filePath,
+        lang,
+        group_name: groupId!,
+        project_name: uiAudio.name,
+      },
+    );
+
+    // Summarize + Email + Lecture Notes
+    const [summaryPath, summaryText] = await invoke<[string, string]>(
+      "summarize_transcript",
+      { transcript_path: transcriptPath },
+    );
+    const [emailPath, emailText] = await invoke<[string, string]>(
+      "write_email",
+      { transcript_path: transcriptPath },
+    );
+    const [lectureNotesPath, lectureNotesText] = await invoke<[string, string]>(
+      "write_lecture_notes",
+      { transcript_path: transcriptPath },
+    );
+
+    // Save to db
+    await invoke<string>("insert_project_notes_to_db", {
+      project_id: uiAudio.id,
+      transcript: transcriptText,
+      summary: summaryText,
+      email: emailText,
+      lecture_notes: lectureNotesText,
     });
 
     console.log("Transcript at:", transcriptPath);
+    console.log("Summary at: ", summaryPath);
+    console.log("Email path:", emailPath);
+    console.log("Lecture Notes path: ", lectureNotesPath);
 
     // Switch view
-    setSelectedGroupId(groupId);
+    setSelectedGroupId(groupId!);
     setSelectedAudioProjectId(uiAudio.id);
     setCurrentView("project");
   };

@@ -13,6 +13,7 @@ pub async fn summarize(path: &PathBuf) -> Result<String> {
         "Summarize the following transcript:\n{}",
         truncate(&text, 3000)
     );
+    println!("Summary sent to queue");
     enqueue_completion(prompt, 512).await
 }
 

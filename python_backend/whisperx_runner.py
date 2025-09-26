@@ -20,6 +20,7 @@ def whisperx_runner(
         language = None
 ):
         try:
+                device = "cpu" # TODO: fix the GPU dynamic issues, for now force it to work on cpu
                 compute_type = compute_type or ("float16" if device == "cuda" else "int8")
                 # Transcribe with original whisper (batched)
                 print("[INFO] Loading STT model and audio...")

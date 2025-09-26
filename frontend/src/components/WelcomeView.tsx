@@ -22,6 +22,7 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ onFileUploaded }) => {
       multiple: false,
       filters: [{ name: "Audio", extensions: ["mp3", "wav", "m4a"] }],
     });
+    if (!selected) return;
     if (typeof selected !== "string") {
       throw new Error("File picker did not return a string path");
     }

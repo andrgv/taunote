@@ -14,9 +14,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet,
-            commands::summarize_project,
-            commands::project_email,
-            commands::project_lecture_notes,
+            commands::summarize_transcript,
+            commands::write_email,
+            commands::write_lecture_notes,
             commands::transcribe_audio,
             commands::setup_backend,
             commands::get_project_groups,

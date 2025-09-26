@@ -77,6 +77,7 @@ pub async fn enqueue_completion(prompt: String, n_predict: u32) -> Result<String
         .await;
 
     // send the job to queue and wait for response
+    println!("Sending job to llm");
     sender.send(job).await?;
     let response: Result<String, AnyhowError> = rx.await?;
     let output = response?;
